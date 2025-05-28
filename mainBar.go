@@ -3,8 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// Urun JSON yapısı
 type Urun struct {
 	ID       int     `json:"id"`
 	Isim     string  `json:"isim"`
@@ -27,6 +26,7 @@ type Mesaj struct {
 
 var db *sql.DB
 
+// Her istekte CORS header’larını ekleyip OPTIONS’ta erken çıkıyoruz.
 func applyCORS(w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -38,6 +38,7 @@ func applyCORS(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
+// /sira-degistir endpoint’i
 func siraDegistirHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("→ /sira-degistir called")
 	if applyCORS(w, r) {
@@ -82,6 +83,7 @@ func siraDegistirHandler(w http.ResponseWriter, r *http.Request) {
 			 WHERE kategori = ? AND sira > ? AND sira <= ? AND id != ?
 		`, req.Kategori, eski, req.YeniSira, req.ID)
 	} else {
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(Mesaj{Mesaj: "Zaten o sırada"})
 		return
 	}
@@ -99,9 +101,11 @@ func siraDegistirHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tx.Commit()
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(Mesaj{Mesaj: "Sıra başarıyla güncellendi"})
 }
 
+// /menu/ handler
 func menuHandler(w http.ResponseWriter, r *http.Request) {
 	if applyCORS(w, r) {
 		return
@@ -139,11 +143,11 @@ func menuHandler(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		var tek Urun
-		body, _ := io.ReadAll(r.Body)
-		if err := json.Unmarshal(body, &tek); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&tek); err != nil {
 			http.Error(w, "Geçersiz JSON", http.StatusBadRequest)
 			return
 		}
+
 		var maxSira int
 		if err := db.QueryRow(
 			"SELECT IFNULL(MAX(sira),0)+1 FROM urunler WHERE kategori = ?",
@@ -152,6 +156,7 @@ func menuHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Sıra alınamadı", http.StatusInternalServerError)
 			return
 		}
+
 		_, err := db.Exec(
 			"INSERT INTO urunler (kategori, isim, fiyat, sira, aciklama) VALUES (?, ?, ?, ?, ?)",
 			kategori, tek.Isim, tek.Fiyat, maxSira, tek.Aciklama,
@@ -160,51 +165,47 @@ func menuHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Veritabanına eklenemedi", http.StatusInternalServerError)
 			return
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(Mesaj{Mesaj: "Ürün başarıyla eklendi"})
 
 	case http.MethodPut:
-		var urunler []Urun
-		body, _ := io.ReadAll(r.Body)
-		if err := json.Unmarshal(body, &urunler); err != nil {
+		var u Urun
+		if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 			http.Error(w, "Geçersiz JSON", http.StatusBadRequest)
 			return
 		}
 
-		updated := 0
-		for _, u := range urunler {
-			res, err := db.Exec(
-				`UPDATE urunler
-				    SET fiyat = ?, aciklama = ?
-				  WHERE kategori = ? AND isim = ?`,
-				u.Fiyat, u.Aciklama, kategori, u.Isim,
-			)
-			if err != nil {
-				continue
-			}
-			if n, _ := res.RowsAffected(); n > 0 {
-				updated++
-			}
-		}
-		if updated == 0 {
-			http.Error(w, "Hiçbir ürün güncellenemedi", http.StatusNotFound)
+		res, err := db.Exec(
+			`UPDATE urunler
+			    SET fiyat = ?, aciklama = ?
+			  WHERE id = ? AND kategori = ?`,
+			u.Fiyat, u.Aciklama, u.ID, kategori,
+		)
+		if err != nil {
+			http.Error(w, "Güncelleme hatası", http.StatusInternalServerError)
 			return
 		}
+		if n, _ := res.RowsAffected(); n == 0 {
+			http.Error(w, "Ürün bulunamadı veya güncellenemedi", http.StatusNotFound)
+			return
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(Mesaj{Mesaj: fmt.Sprintf("%d ürün güncellendi", updated)})
+		json.NewEncoder(w).Encode(Mesaj{Mesaj: "Ürün başarıyla güncellendi"})
 
 	case http.MethodDelete:
 		var s struct {
-			Isim string `json:"isim"`
+			ID int `json:"id"`
 		}
-		body, _ := io.ReadAll(r.Body)
-		if err := json.Unmarshal(body, &s); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&s); err != nil {
 			http.Error(w, "Geçersiz JSON", http.StatusBadRequest)
 			return
 		}
+
 		res, err := db.Exec(
-			"DELETE FROM urunler WHERE kategori = ? AND isim = ?",
-			kategori, s.Isim,
+			"DELETE FROM urunler WHERE id = ? AND kategori = ?",
+			s.ID, kategori,
 		)
 		if err != nil {
 			http.Error(w, "Silme hatası", http.StatusInternalServerError)
@@ -214,7 +215,9 @@ func menuHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Ürün bulunamadı", http.StatusNotFound)
 			return
 		}
-		json.NewEncoder(w).Encode(Mesaj{Mesaj: "Ürün silindi"})
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(Mesaj{Mesaj: "Ürün başarıyla silindi"})
 
 	default:
 		http.Error(w, "Yöntem desteklenmiyor", http.StatusMethodNotAllowed)
@@ -229,9 +232,8 @@ func main() {
 	}
 	defer db.Close()
 
-	// Tablo ve kolon yaratma
-	_, _ = db.Exec(`ALTER TABLE urunler ADD COLUMN aciklama TEXT DEFAULT ''`)
-	_, err = db.Exec(`
+	// Eğer tablo yoksa oluştur, aciklama kolonu zaten varsa hata yoksayılacak
+	_, _ = db.Exec(`
     CREATE TABLE IF NOT EXISTS urunler (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       kategori TEXT,
@@ -240,11 +242,7 @@ func main() {
       sira INTEGER DEFAULT 0,
       aciklama TEXT DEFAULT ''
     );`)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	// Port’u ortam değişkeninden oku (Render vs. için)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8081"
