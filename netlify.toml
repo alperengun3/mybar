@@ -1,0 +1,13 @@
+[build]
+  command = ""       # projeyi derleme/adım yok
+  publish = "."      # web’e sunulacak klasör: kök dizin (.)
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/user"
+  to = "/user/index.html"
+  status = 200
