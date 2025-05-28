@@ -1,27 +1,23 @@
 [build]
-  publish = "."  # statik siten burada
+  publish = "."
 
-# tüm /menu/* isteklerini Go API'na ilet
 [[redirects]]
   from   = "/menu/*"
-  to     = "https://my-bar-api.onrender.com/menu/:splat"
+  to     = "https://MY-API-URL.onrender.com/menu/:splat"
   status = 200
   force  = true
 
-# PUT /sira-degistir isteklerini Go API'na ilet
 [[redirects]]
   from   = "/sira-degistir"
-  to     = "https://my-bar-api.onrender.com/sira-degistir"
+  to     = "https://MY-API-URL.onrender.com/sira-degistir"
   status = 200
   force  = true
 
-# Admin panel
 [[redirects]]
   from   = "/admin"
   to     = "/admin/index.html"
   status = 200
 
-# User panel
 [[redirects]]
   from   = "/user"
   to     = "/user/index.html"

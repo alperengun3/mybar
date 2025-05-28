@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -228,23 +229,29 @@ func main() {
 	}
 	defer db.Close()
 
+	// Tablo ve kolon yaratma
 	_, _ = db.Exec(`ALTER TABLE urunler ADD COLUMN aciklama TEXT DEFAULT ''`)
-
 	_, err = db.Exec(`
-CREATE TABLE IF NOT EXISTS urunler (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  kategori TEXT,
-  isim TEXT,
-  fiyat REAL,
-  sira INTEGER DEFAULT 0,
-  aciklama TEXT DEFAULT ''
-);`)
+    CREATE TABLE IF NOT EXISTS urunler (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      kategori TEXT,
+      isim TEXT,
+      fiyat REAL,
+      sira INTEGER DEFAULT 0,
+      aciklama TEXT DEFAULT ''
+    );`)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Sunucu :8081 üzerinde çalışıyor")
+	// Port’u ortam değişkeninden oku (Render vs. için)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8081"
+	}
+	log.Printf("Sunucu port %s üzerinde çalışıyor\n", port)
+
 	http.HandleFunc("/menu/", menuHandler)
 	http.HandleFunc("/sira-degistir", siraDegistirHandler)
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
