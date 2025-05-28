@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Menü Sayfası</title>
+  <style>
+body {
+  position: relative;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  font-family: sans-serif;
+  transition: background-image 0.6s ease-in-out;
+  text-align: center;
+  overflow-y: auto;
+}
+
+h1 {
+  color: #ffffff;
+  padding: 15px 25px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  display: inline-block;
+  margin: 30px auto;
+  text-align: center;
+}
+
+
+
+    .kategori {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+
+    .kategori button {
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .kategori button:hover {
+      background-color: #2980b9;
+    }
+
+    
+
+    .urun-listesi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;  
+    gap: 20px;   
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .urun {
+    background-color: rgba(255,255,255,0.275);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    text-align: left;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    word-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .urun .baslik-fiyat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.urun .baslik-fiyat .isim {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #fff;
+}
+.urun .baslik-fiyat .fiyat {
+  font-size: 1rem;
+  color: #ccff00;
+}
+
+.urun .description {
+  font-style: italic;
+  color: rgba(255,255,255,0.7);
+  margin-top: 6px;
+  font-size: 0.9rem;
+}
+
+
+.urun.goster {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+    .urun h3 {
+      margin-bottom: 8px;
+      color: #333;
+      text-shadow: 1px 1px 2px rgba(250, 250, 250, 0.6); 
+    }
+
+    .urun p {
+      font-weight: bold;
+      color: #ccff00;
+    }
+  </style>
+</head>
+<body>
+  <div class="arka-blur"></div>
+
+  <h1>Menümüz</h1>
+
+  <div class="arka-plan">
+
+
+    <div class="kategori">
+      <button onclick="getirUrunler('kokteyl')">Kokteyl</button>
+      <button onclick="getirUrunler('bira')">Bira</button>
+      <button onclick="getirUrunler('sarap')">Şarap</button>
+      <button onclick="getirUrunler('viski')">Viski</button>
+      <button onclick="getirUrunler('votka')">Votka</button>
+      <button onclick="getirUrunler('alkolsuz')">Alkolsüz</button>
+      <button onclick="getirUrunler('atistirmalik')">Atıştırmalık</button>
+
+    </div>
+    
+    
+    <div class="arka-plan">
+    </div>
+    
+
+    <div class="urun-listesi" id="urunListesi">
+      <p>Bir kategori seçin...</p>
+    </div>
+  </div>
+
+
+  <script>
+    const arkaPlanlar = {
+      kokteyl:      "images/kokteyl-bg.jpg",
+      bira:         "images/bira-bg.jpg",
+      sarap:        "images/sarap-bg.jpg",
+      viski:        "images/viski-bg.jpg",
+      votka:        "images/votka-bg.jpg",
+      alkolsuz:     "images/alkolsuz-bg.jpg",
+      atistirmalik: "images/atistirmalik-bg.jpg"
+    };
+
+    (function() {
+      getirUrunler("kokteyl");
+    })();
+
+    function getirUrunler(kategori) {
+    fetch(`http://localhost:8081/menu/${kategori}`)
+      .then(res => res.json())
+      .then(data => {
+        const grid = document.querySelector(".urun-listesi");
+        grid.innerHTML = "";
+
+        data.forEach(urun => {
+          const div = document.createElement("div");
+          div.className = "urun";
+          div.innerHTML = `
+            <div class="baslik-fiyat">
+              <span class="isim">${urun.isim}</span>
+              <span class="fiyat">${urun.fiyat.toFixed(2)} ₺</span>
+            </div>
+            ${urun.aciklama
+              ? `<div class="description">${urun.aciklama}</div>`
+              : ``
+            }
+          `;
+          grid.appendChild(div);
+        });
+
+        document.body.style.backgroundImage = `url('${arkaPlanlar[kategori]}')`;
+      })
+        .catch(err => {
+          document.querySelector(".urun-listesi").innerHTML =
+            `<p style="color:red;">Veri alınamadı</p>`;
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>

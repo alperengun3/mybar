@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Paneli</title>
+  <style>
+
+h1 {
+      color: #5c64ff;
+      -webkit-text-stroke: 1.2px #000000;
+    }
+
+    h2 {
+      color: #5c64ff;
+      -webkit-text-stroke: 0.8px #000000;
+    }
+
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 40px;
+      background-size: cover;
+      background-position: center;
+      transition: background 0.3s ease;
+      overflow-y: auto;
+    }
+    .container { max-width: 800px; margin: auto; position: relative; }
+
+    /* Login Modal */
+    #loginModal {
+      position: fixed; top:0; left:0; right:0; bottom:0;
+      background: rgba(0,0,0,0.6);
+      display: flex; align-items:center; justify-content:center;
+      z-index:100;
+    }
+    #loginModal.hidden { display: none; }
+    #loginModal form {
+      background: #fff; padding:20px; border-radius:8px; text-align:center;
+      width: 280px;
+    }
+    #loginModal input { width:90%; margin:8px 0; padding:8px; }
+    #loginError { color:red; display:none; margin-top:8px; }
+
+    /* Admin Panel */
+    #adminContainer { display: none; }
+    form.blur-container {
+      backdrop-filter: blur(10px); background:rgba(255,255,255,0.8);
+      padding:20px; border-radius:12px; margin-bottom:30px;
+    }
+    input, select, button {
+      margin:0 10px 10px 0; padding:8px; font-size:16px;
+      border:1px solid #ccc; border-radius:4px;
+    }
+    button { background:#3498db; color:#fff; cursor:pointer; }
+    button:hover { background:#2980b9; }
+    #logoutBtn {
+      position:absolute; top:0; right:0;
+      background:#e74c3c; color:#fff; border:none; padding:8px 12px;
+      border-radius:4px; cursor:pointer;
+    }
+    #logoutBtn:hover { background:#c0392b; }
+
+    #arama { width:100%; box-sizing:border-box; margin-bottom:20px; }
+    ul { list-style:none; padding:0; }
+    li.blur-box {
+      backdrop-filter: blur(10px); background:rgba(255,255,255,0.2);
+      margin:10px 0; padding:15px; border-radius:12px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .buttons { display:flex; gap:8px; }
+    .buttons input { width:60px; }
+
+    /* Ürün başlığı/fiyat */
+    .baslik-fiyat { display:flex; align-items:center; gap:8px; }
+    .isim {
+      font-weight:bold; color:#fff; font-size:1.15em;
+    }
+    .fiyat {
+      font-weight:italic; color:#00aec5; font-size:1.15em;
+    }
+
+    /* Açıklama */
+    .description {
+      font-style:italic; color:rgba(255,255,255,0.7); font-size:0.9em;
+      margin-top:6px;
+    }
+    .description::after { content:'...'; }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="loginModal">
+    <form id="loginForm">
+      <h2>Admin Girişi</h2>
+      <input id="usernameInput" type="text"     placeholder="Kullanıcı adı" required><br>
+      <input id="passwordInput" type="password" placeholder="Şifre"         required><br>
+      <button type="submit">Giriş Yap</button>
+      <div id="loginError">Kullanıcı adı veya şifre yanlış</div>
+    </form>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="adminContainer" class="container">
+    <button id="logoutBtn">Çıkış Yap</button>
+    <h1>Admin Paneli</h1>
+
+    <form id="urunForm" class="blur-container">
+      <input name="isim"     type="text"     placeholder="Ürün adı" required>
+      <input name="fiyat"    type="number"   placeholder="Fiyat"    required>
+      <input name="aciklama" type="text"     placeholder="Açıklama">
+      <label for="kategori">Kategori:</label>
+      <select id="kategori">
+        <option value="kokteyl">Kokteyl</option>
+        <option value="bira">Bira</option>
+        <option value="sarap">Şarap</option>
+        <option value="viski">Viski</option>
+        <option value="votka">Votka</option>
+        <option value="alkolsuz">Alkolsuz</option>
+        <option value="atistirmalik">Atıştırmalık</option>
+      </select>
+      <button type="submit">Ekle</button>
+    </form>
+
+    <h2>Ürün Listesi</h2>
+    <input id="arama" type="text" placeholder="Ürün ara...">
+    <ul id="urunListesi"></ul>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
