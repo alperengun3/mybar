@@ -1,13 +1,28 @@
 [build]
-  command = ""       # projeyi derleme/adım yok
-  publish = "."      # web’e sunulacak klasör: kök dizin (.)
+  publish = "."  # statik siten burada
 
+# tüm /menu/* isteklerini Go API'na ilet
 [[redirects]]
-  from = "/admin"
-  to = "/admin/index.html"
+  from   = "/menu/*"
+  to     = "https://my-bar-api.onrender.com/menu/:splat"
+  status = 200
+  force  = true
+
+# PUT /sira-degistir isteklerini Go API'na ilet
+[[redirects]]
+  from   = "/sira-degistir"
+  to     = "https://my-bar-api.onrender.com/sira-degistir"
+  status = 200
+  force  = true
+
+# Admin panel
+[[redirects]]
+  from   = "/admin"
+  to     = "/admin/index.html"
   status = 200
 
+# User panel
 [[redirects]]
-  from = "/user"
-  to = "/user/index.html"
+  from   = "/user"
+  to     = "/user/index.html"
   status = 200
