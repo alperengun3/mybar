@@ -163,7 +163,7 @@ h1 {
     })();
 
     function getirUrunler(kategori) {
-    fetch(`http://localhost:8081/menu/${kategori}`)
+fetch(`/menu/${kategori}`)
       .then(res => res.json())
       .then(data => {
         const grid = document.querySelector(".urun-listesi");
