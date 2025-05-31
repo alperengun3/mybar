@@ -13,6 +13,8 @@ const urunListesi    = document.getElementById('urunListesi');
 let userRole    = null;
 let currentCategory;
 
+
+//
 const arkaPlanlar = {
   kokteyl:      'images/kokteyl-bg.jpg',
   bira:         'images/bira-bg.jpg',
