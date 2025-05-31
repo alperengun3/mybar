@@ -1,10 +1,4 @@
-const API_BASE = 'https://mybar-2fla.onrender.com';
-
-const creds = {
-  admin:    { pwd: 'full123!',    role: 'admin'   },
-  editor:   { pwd: 'editor789',   role: 'editor'  },
-  ziyaretci:{ pwd: 'guest123',    role: 'ziyaretci' }
-};
+const API_BASE = "";
 
 const loginModal     = document.getElementById('loginModal');
 const loginForm      = document.getElementById('loginForm');
@@ -19,6 +13,7 @@ const urunListesi    = document.getElementById('urunListesi');
 let userRole    = null;
 let currentCategory;
 
+// Arkaplan ayarı
 const arkaPlanlar = {
   kokteyl:      'images/kokteyl-bg.jpg',
   bira:         'images/bira-bg.jpg',
@@ -32,25 +27,21 @@ const arkaPlanlar = {
 function setBackground(cat) {
   document.body.style.backgroundImage = `url('${arkaPlanlar[cat]}')`;
 }
-
 function showLogin(){
   loginModal.classList.remove('hidden');
   adminContainer.style.display = 'none';
 }
-
 function showAdmin(){
   loginModal.classList.add('hidden');
   adminContainer.style.display = 'block';
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Şimdi DOM tamamen yüklendi, bu yüzden kategoriSelect mevcut.
-  currentCategory = localStorage.getItem('adminCurrentCategory') || kategoriSelect.value;
-  kategoriSelect.value = currentCategory;
-
   const savedRole = localStorage.getItem('userRole');
-  if (savedRole && Object.values(creds).some(c => c.role === savedRole)) {
+  if (savedRole) {
     userRole = savedRole;
+    currentCategory = localStorage.getItem('adminCurrentCategory') || kategoriSelect.value;
+    kategoriSelect.value = currentCategory;
     showAdmin();
     listeleUrunler();
   } else {
@@ -58,19 +49,44 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-loginForm.addEventListener('submit', e => {
+loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const u = document.getElementById('usernameInput').value;
-  const p = document.getElementById('passwordInput').value;
-  if (creds[u] && creds[u].pwd === p) {
-    userRole = creds[u].role;
-    localStorage.setItem('userRole', userRole);
-    localStorage.setItem('adminCurrentCategory', currentCategory);
-    loginError.style.display = 'none';
-    showAdmin();
-    listeleUrunler();
-  } else {
-    loginError.style.display = 'block';
+  const u = document.getElementById('usernameInput').value.trim();
+  const p = document.getElementById('passwordInput').value.trim();
+
+  if (!u || !p) {
+    loginError.textContent = "Kullanıcı adı ve şifre boş olamaz.";
+    loginError.style.display = "block";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+
+    if (res.ok) {
+      const data = await res.json(); // { role: "admin" veya "editor" veya "ziyaretci" }
+      userRole = data.role;
+      localStorage.setItem('userRole', userRole);
+      localStorage.setItem('adminCurrentCategory', kategoriSelect.value);
+
+      loginError.style.display = 'none';
+      showAdmin();
+      listeleUrunler();
+    } else if (res.status === 401) {
+      loginError.textContent = "Kullanıcı adı veya şifre yanlış.";
+      loginError.style.display = "block";
+    } else {
+      loginError.textContent = `Sunucu hatası: ${res.status}`;
+      loginError.style.display = "block";
+    }
+  } catch (err) {
+    console.error(err);
+    loginError.textContent = "Sunucuya ulaşılamadı.";
+    loginError.style.display = "block";
   }
 });
 
@@ -91,7 +107,8 @@ kategoriSelect.addEventListener('change', () => {
 urunForm.addEventListener('submit', e => {
   e.preventDefault();
   if (userRole !== 'admin') {
-    return alert('Bu yetkiyle ürün ekleyemezsiniz, admine danışın...');
+    alert('Bu yetkiyle ürün ekleyemezsiniz, admine danışın...');
+    return;
   }
 
   const isim  = e.target.isim.value.trim();
