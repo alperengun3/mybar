@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -23,6 +26,15 @@ type Mesaj struct {
 	Mesaj string `json:"mesaj"`
 }
 
+type clientData struct {
+	Timestamp int64
+	Count     int
+}
+
+var clients = make(map[string]*clientData)
+
+var mu sync.Mutex
+
 var creds = map[string]struct {
 	Pwd  string
 	Role string
@@ -33,6 +45,49 @@ var creds = map[string]struct {
 }
 
 var db *sql.DB
+
+const MAX_REQUESTS_PER_SECOND = 20
+
+func rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+		}
+
+		now := time.Now().Unix()
+
+		mu.Lock()
+		data, exists := clients[ip]
+		if !exists {
+			clients[ip] = &clientData{
+				Timestamp: now,
+				Count:     1,
+			}
+			mu.Unlock()
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if data.Timestamp == now {
+			if data.Count >= MAX_REQUESTS_PER_SECOND {
+				mu.Unlock()
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusTooManyRequests)
+				json.NewEncoder(w).Encode(Mesaj{Mesaj: "Çok fazla istek. Lütfen bekleyin."})
+				return
+			}
+			data.Count++
+			mu.Unlock()
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		data.Timestamp = now
+		data.Count = 1
+		mu.Unlock()
+		next.ServeHTTP(w, r)
+	})
+}
 
 func applyCORS(w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -285,10 +340,9 @@ func main() {
 	}
 	log.Printf("Sunucu port %s üzerinde çalışıyor\n", port)
 
-	http.HandleFunc("/login", loginHandler)
-
-	http.HandleFunc("/menu/", menuHandler)
-	http.HandleFunc("/sira-degistir", siraDegistirHandler)
+	http.Handle("/login", rateLimitMiddleware(http.HandlerFunc(loginHandler)))
+	http.Handle("/menu/", rateLimitMiddleware(http.HandlerFunc(menuHandler)))
+	http.Handle("/sira-degistir", rateLimitMiddleware(http.HandlerFunc(siraDegistirHandler)))
 
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
