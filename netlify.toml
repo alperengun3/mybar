@@ -1,7 +1,14 @@
 [build]
   publish = "."
 
-# Sadece “tam olarak” /admin veya /admin/ URL’lerini index’e yönlendir:
+# Kök (/) → user/index.html
+[[redirects]]
+  from   = "/"
+  to     = "/user/index.html"
+  status = 200
+  force  = true
+
+# /admin → admin/index.html
 [[redirects]]
   from   = "/admin"
   to     = "/admin/index.html"
@@ -14,21 +21,19 @@
   status = 200
   force  = true
 
-# Login proxy
+# Proxy yönlendirmeleri
 [[redirects]]
   from   = "/login"
   to     = "https://mybar-2fla.onrender.com/login"
   status = 200
   force  = true
 
-# Menü proxy
 [[redirects]]
   from   = "/menu/*"
   to     = "https://mybar-2fla.onrender.com/menu/:splat"
   status = 200
   force  = true
 
-# Sıra değiştir proxy
 [[redirects]]
   from   = "/sira-degistir"
   to     = "https://mybar-2fla.onrender.com/sira-degistir"
