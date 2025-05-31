@@ -11,7 +11,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Urun JSON yapısı
 type Urun struct {
 	ID       int     `json:"id"`
 	Isim     string  `json:"isim"`
@@ -24,9 +23,17 @@ type Mesaj struct {
 	Mesaj string `json:"mesaj"`
 }
 
+var creds = map[string]struct {
+	Pwd  string
+	Role string
+}{
+	"admin":     {Pwd: "full123!", Role: "admin"},
+	"editor":    {Pwd: "editor789", Role: "editor"},
+	"ziyaretci": {Pwd: "guest123", Role: "ziyaretci"},
+}
+
 var db *sql.DB
 
-// Her istekte CORS header’larını ekleyip OPTIONS’ta erken çıkıyoruz.
 func applyCORS(w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -38,7 +45,38 @@ func applyCORS(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
-// /sira-degistir endpoint’i
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if applyCORS(w, r) {
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Sadece POST destekleniyor", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var loginData struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
+		http.Error(w, "Geçersiz JSON", http.StatusBadRequest)
+		return
+	}
+
+	if info, ok := creds[loginData.Username]; ok {
+		if info.Pwd == loginData.Password {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(struct {
+				Role string `json:"role"`
+			}{Role: info.Role})
+			return
+		}
+	}
+
+	http.Error(w, "Kullanıcı adı veya şifre yanlış", http.StatusUnauthorized)
+}
+
 func siraDegistirHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("→ /sira-degistir called")
 	if applyCORS(w, r) {
@@ -105,7 +143,6 @@ func siraDegistirHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Mesaj{Mesaj: "Sıra başarıyla güncellendi"})
 }
 
-// /menu/ handler
 func menuHandler(w http.ResponseWriter, r *http.Request) {
 	if applyCORS(w, r) {
 		return
@@ -232,7 +269,6 @@ func main() {
 	}
 	defer db.Close()
 
-	// Eğer tablo yoksa oluştur, aciklama kolonu zaten varsa hata yoksayılacak
 	_, _ = db.Exec(`
     CREATE TABLE IF NOT EXISTS urunler (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -249,7 +285,10 @@ func main() {
 	}
 	log.Printf("Sunucu port %s üzerinde çalışıyor\n", port)
 
+	http.HandleFunc("/login", loginHandler)
+
 	http.HandleFunc("/menu/", menuHandler)
 	http.HandleFunc("/sira-degistir", siraDegistirHandler)
+
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

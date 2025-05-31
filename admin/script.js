@@ -13,7 +13,6 @@ const urunListesi    = document.getElementById('urunListesi');
 let userRole    = null;
 let currentCategory;
 
-// Arkaplan ayarı
 const arkaPlanlar = {
   kokteyl:      'images/kokteyl-bg.jpg',
   bira:         'images/bira-bg.jpg',
@@ -68,7 +67,7 @@ loginForm.addEventListener('submit', async (e) => {
     });
 
     if (res.ok) {
-      const data = await res.json(); // { role: "admin" veya "editor" veya "ziyaretci" }
+      const data = await res.json();
       userRole = data.role;
       localStorage.setItem('userRole', userRole);
       localStorage.setItem('adminCurrentCategory', kategoriSelect.value);
@@ -192,7 +191,6 @@ function listeleUrunler(){
             }
           });
 
-          // Güncelle
           li.querySelector('.btn-guncelle').addEventListener('click', evt => {
             if (['editor','admin'].includes(userRole)) {
               const btn   = evt.currentTarget;
@@ -222,7 +220,6 @@ function listeleUrunler(){
             }
           });
 
-          // Sil
           li.querySelector('.btn-sil').addEventListener('click', () => {
             if (userRole === 'admin') {
               const id    = +li.querySelector('.btn-sil').dataset.id;

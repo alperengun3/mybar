@@ -1,8 +1,22 @@
 [build]
-  # Netlify site kökünü (“publish directory”) proje kökü olarak kullan
   publish = "."
 
-# --- Frontend → Backend proxy’leri ---
+# Admin paneli kendi HTML/JS dosyalarına yönlendirme
+[[redirects]]
+  from   = "/admin/*"
+  to     = "/admin/index.html"
+  status = 200
+  force  = true
+
+# Kullanıcı paneli root/index.html’e yönlendir (zaten root yayınlanıyor)
+
+# Backend proxy yönlendirmeleri
+[[redirects]]
+  from   = "/login"
+  to     = "https://mybar-2fla.onrender.com/login"
+  status = 200
+  force  = true
+
 [[redirects]]
   from   = "/menu/*"
   to     = "https://mybar-2fla.onrender.com/menu/:splat"
@@ -12,12 +26,5 @@
 [[redirects]]
   from   = "/sira-degistir"
   to     = "https://mybar-2fla.onrender.com/sira-degistir"
-  status = 200
-  force  = true
-
-# --- /admin yolunu admin/index.html’e yönlendir ---
-[[redirects]]
-  from   = "/admin/"
-  to     = "/admin/index.html"
   status = 200
   force  = true
