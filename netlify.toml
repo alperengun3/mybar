@@ -1,28 +1,34 @@
 [build]
   publish = "."
 
-# Admin paneli kendi HTML/JS dosyalarına yönlendirme
+# Sadece “tam olarak” /admin veya /admin/ URL’lerini index’e yönlendir:
 [[redirects]]
-  from   = "/admin/*"
+  from   = "/admin"
   to     = "/admin/index.html"
   status = 200
   force  = true
 
-# Kullanıcı paneli root/index.html’e yönlendir (zaten root yayınlanıyor)
+[[redirects]]
+  from   = "/admin/"
+  to     = "/admin/index.html"
+  status = 200
+  force  = true
 
-# Backend proxy yönlendirmeleri
+# Login proxy
 [[redirects]]
   from   = "/login"
   to     = "https://mybar-2fla.onrender.com/login"
   status = 200
   force  = true
 
+# Menü proxy
 [[redirects]]
   from   = "/menu/*"
   to     = "https://mybar-2fla.onrender.com/menu/:splat"
   status = 200
   force  = true
 
+# Sıra değiştir proxy
 [[redirects]]
   from   = "/sira-degistir"
   to     = "https://mybar-2fla.onrender.com/sira-degistir"
