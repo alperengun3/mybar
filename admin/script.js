@@ -14,13 +14,13 @@ let userRole    = null;
 let currentCategory;
 
 const arkaPlanlar = {
-  kokteyl:      'images/kokteyl-bg.jpg',
-  bira:         'images/bira-bg.jpg',
-  sarap:        'images/sarap-bg.jpg',
-  viski:        'images/viski-bg.jpg',
-  votka:        'images/votka-bg.jpg',
-  alkolsuz:     'images/alkolsuz-bg.jpg',
-  atistirmalik: 'images/atistirmalik-bg.jpg'
+  kokteyl:      "/admin/images/kokteyl-bg.jpg",
+  bira:         "/admin/images/bira-bg.jpg",
+  sarap:        "/admin/images/sarap-bg.jpg",
+  viski:        "/admin/images/viski-bg.jpg",
+  votka:        "/admin/images/votka-bg.jpg",
+  alkolsuz:     "/admin/images/alkolsuz-bg.jpg",
+  atistirmalik: "/admin/images/atistirmalik-bg.jpg"
 };
 
 function setBackground(cat) {
